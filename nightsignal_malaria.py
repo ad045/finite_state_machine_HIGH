@@ -16,7 +16,29 @@ from datetime import date, timedelta
 os.chdir(".")
 
 
-restinghr_file = "malaria_resp.csv" # "malaria_rhr.csv"
+### EXAMPLE RUN: python3 nightsignal.py --device=AppleWatch --heartrate=P355472-AppleWatch-hr.csv  --step=P355472-AppleWatch-st.csv
+### EXAMPLE RUN: python3 nightsignal.py --device=Fitbit --restinghr=P682517-Fitbit-rhr.csv
+
+### EXAMPLE RUN: python3 nightsignal.py --device=Fitbit 
+                                    #   --heartrate=/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/AZKZ0AI_hr.csv 
+                                    #   --step=/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/AZKZ0AI_steps.csv
+
+# EXAMPLE RUN: 
+# python3 isolationforest.py --device=Fitbit --heartrate=/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_hr.csv --step=/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_steps.csv
+# python3 isolationforest.py --device=Fitbit --heartrate=../../synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_hr.csv --step=../../synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_steps.csv
+
+
+RAW_DATA_DIR = os.path.join('D:', 'COVID-19-Phase2-Wearables', 'COVID-19-Phase2-Wearables')
+RAW_DATA_HR = os.path.join(RAW_DATA_DIR, 'Orig_Fitbit_HR.csv')
+RAW_DATA_STEPS = os.path.join(RAW_DATA_DIR, 'Orig_Fitbit_ST.csv')
+
+RAW_DATA_HR = "/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/covid_data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_hr.csv"
+RAW_DATA_STEPS = "/home/adrian_linux/07_HIGH/synthetic_augmentation_of_smartwatch_data_for_proactive_infectious_disease_management/data/covid_data/raw_data/COVID-19-Wearables/COVID-19-Wearables/A1K5DRI_steps.csv"
+# heartrate_file = RAW_DATA_HR
+# step_file = RAW_DATA_STEPS
+# restinghr_file = ""
+
+# python3 nightsignal.py --device=Fitbit
 
 #functions
 def consecutive_groups(iterable, ordering=lambda x: x):
@@ -29,8 +51,9 @@ def merge_two_dicts(x, y):
     return z
     
 def sort_dict_data(data):
-    return OrderedDict((k, v) for k, v in sorted(data.iteritems()))
-
+    return OrderedDict((k, v)
+                       for k, v in sorted(data.iteritems()))
+                       
 def round10Base( n ):
     a = (n // 10) * 10
     b = a + 10
@@ -58,18 +81,16 @@ try:
 except getopt.error as err:
     print(str(err))
     sys.exit(2)
+ 
 
-
-heartrate_file = ""
-step_file = ""
-restinghr_file = ""
+# heartrate_file = ""
+# step_file = ""
+# restinghr_file = ""
 device = ""
 
 for current_argument, current_value in arguments:
     if current_argument in ("-h", "--help") :
-        print("Please use: python3 nightsignal.py --device=Fitbit --restinghr=<RHR_FILE> || "
-                "python3 nightsignal.py --device=AppleWatch --heartrate=<HR_FILE> --step=<STEP_FILE> || "
-                "python3 nightsignal.py --device=AppleWatch --restinghr=<RHR_FILE>")
+        print ("Please use: python3 nightsignal.py --device=Fitbit --restinghr=<RHR_FILE> || python3 nightsignal.py --device=AppleWatch  --heartrate=<HR_FILE> --step=<STEP_FILE> ")
     elif current_argument in ("--heartrate"):
         heartrate_file = current_value
     elif current_argument in ("--step"):
@@ -82,101 +103,109 @@ for current_argument, current_value in arguments:
 
 ###nightsignal configs
 medianConfig = "MedianOfAvgs" # MedianOfAvgs | AbsoluteMedian
-yellow_threshold = 1 # 3
-red_threshold = 1 # 4
-
-################################# AppleWatch #################################
-
-# Use malaria file
-if True: # if restinghr_file != "": # 'restinghr_file' in locals() and restinghr_file:
-    rhr_file = restinghr_file
-    # rhr_file = 'AW_rhr.csv'  # Use the generated file
-
-# Now read from the resting heart rate file (either provided or generated)
-with open(rhr_file, "r") as hrFile:
-    records = hrFile.readlines()
+yellow_threshold = 3
+red_threshold = 4
 
 
-# else: 
-    # ###Preprocess to get resting heartrate
-    # delta = datetime.timedelta(minutes=1)
+################################# OLD: AppleWatch #################################
 
-    # dateTimes = {}
-    # with open(step_file  , "r") as stepCSV:
-    #     stepCSVReader = csv.DictReader(stepCSV)
-    #     for step_rec in stepCSVReader:
-            
-    #             st_start_date = step_rec['Start_Date']
-    #             st_start_time = step_rec['Start_Time']
-    #             st_end_date = step_rec['End_Date']
-    #             st_end_time = step_rec['End_Time']
-    #             #We need to add handler for the other one
-    #             if(st_start_date == st_end_date):
-    #                 start = datetime.datetime.strptime( st_start_time, '%H:%M:%S' )
-    #                 end = datetime.datetime.strptime( st_end_time, '%H:%M:%S' )
-    #                 t = start
-    #                 while t <= end :
-    #                     tempArray = []
-    #                     if(st_start_date in dateTimes):
-    #                         tempArray = dateTimes[st_start_date]
-    #                     tempArray.append(datetime.datetime.strftime(t, '%H:%M'))
-    #                     dateTimes[st_start_date] = tempArray
-    #                     t += delta
+malaria_file = 'malaria_rhr.csv' # instead of 'AW_rhr.csv'
 
-    # with open('AW_rhr.csv' , "w") as rhrFile:
-    #     rhrFile.write("Device,Start_Date,Start_Time,Value")
-    #     with open(heartrate_file , "r") as hrCSV:
-    #         hrCSVReader = csv.DictReader(hrCSV)
-    #         for hr_rec in hrCSVReader:
-    #                 hr_start_date = hr_rec['Start_Date']
-    #                 hr_start_time = hr_rec['Start_Time']
-    #                 hr_value = hr_rec['Heartrate']
-    #                 if (hr_start_date in dateTimes):
-    #                     arrayForThisDay = dateTimes[hr_start_date]
-    #                     hr_time  = datetime.datetime.strptime( hr_start_time, '%H:%M:%S' )
-    #                     if ( datetime.datetime.strftime(hr_time, '%H:%M') not in arrayForThisDay):
-    #                         rhrFile.write(device + "," + hr_start_date + "," + hr_start_time + "," + hr_value + "\n")
-#   rhr_file = ...
 
-with open(rhr_file, "r") as hrFile:
+###Preprocess to get resting heartrate
+delta = datetime.timedelta(minutes=1)
+
+dateTimes = {}
+# with open(step_file  , "r") as stepCSV:
+#     stepCSVReader = csv.DictReader(stepCSV)
+#     for step_rec in stepCSVReader:
+        
+#             st_start_date = step_rec['Start_Date']
+#             st_start_time = step_rec['Start_Time']
+#             st_end_date = step_rec['End_Date']
+#             st_end_time = step_rec['End_Time']
+#             #We need to add handler for the other one
+#             if(st_start_date == st_end_date):
+#                 start = datetime.datetime.strptime( st_start_time, '%H:%M:%S' )
+#                 end = datetime.datetime.strptime( st_end_time, '%H:%M:%S' )
+#                 t = start
+#                 while t <= end :
+#                     tempArray = []
+#                     if(st_start_date in dateTimes):
+#                         tempArray = dateTimes[st_start_date]
+#                     tempArray.append(datetime.datetime.strftime(t, '%H:%M'))
+#                     dateTimes[st_start_date] = tempArray
+#                     t += delta
+
+# with open(malaria_file , "w") as rhrFile:
+#     rhrFile.write("Device,Start_Date,Start_Time,Value")
+    # with open(heartrate_file , "r") as hrCSV:
+    #     hrCSVReader = csv.DictReader(hrCSV)
+    #     for hr_rec in hrCSVReader:
+    #             hr_start_date = hr_rec['Start_Date']
+    #             hr_start_time = hr_rec['Start_Time']
+    #             hr_value = hr_rec['Heartrate']
+    #             if (hr_start_date in dateTimes):
+    #                 arrayForThisDay = dateTimes[hr_start_date]
+    #                 hr_time  = datetime.datetime.strptime( hr_start_time, '%H:%M:%S' )
+    #                 if ( datetime.datetime.strftime(hr_time, '%H:%M') not in arrayForThisDay):
+    #                     rhrFile.write(device + "," + hr_start_date + "," + hr_start_time + "," + hr_value + "\n")
+
+
+with open(malaria_file, "r") as hrFile:
     records = hrFile.readlines()
 
 date_hrs_dic = {}
+print("records: ")
+print(records)
 for record in records:
     if ("Device" not in record):
         record_elements = record.split(",")
-        rec_date = record_elements[1]
-        rec_time = record_elements[2]
-        rec_hr = record_elements[3].strip(' \t\n\r')
-        if ((rec_time.startswith("00:")) or (rec_time.startswith("01:")) or (rec_time.startswith("02:")) or (rec_time.startswith("03:")) or (rec_time.startswith("04:")) or (rec_time.startswith("05:")) or (rec_time.startswith("06:"))):
-            if (rec_date not in date_hrs_dic):
-                date_hrs_dic[rec_date] = rec_hr
-            else:
-                date_hrs_dic[rec_date] = date_hrs_dic[rec_date] + "*" + rec_hr
+        # rec_date = record_elements[1]
+        # rec_time = record_elements[2]
+        # rec_hr = record_elements[3].strip(' \t\n\r')
+        rec_date = record_elements[0]
+        # rec_time = record_elements[1]
+        rec_hr = record_elements[1].strip(' \t\n\r')
+        # print(record_elements[1], rec_hr)
+        # 2: f_0
+        # 3: ST_value
+        
+        # WE ALREADY HAVE THE DAILY MEAN RHR...
+        # if ((rec_time.startswith("00:")) or (rec_time.startswith("01:")) or (rec_time.startswith("02:")) or (rec_time.startswith("03:")) or (rec_time.startswith("04:")) or (rec_time.startswith("05:")) or (rec_time.startswith("06:"))):
+        #     if (rec_date not in date_hrs_dic):
+        #         date_hrs_dic[rec_date] = rec_hr
+        #     else:
+        #         date_hrs_dic[rec_date] = date_hrs_dic[rec_date] + "*" + rec_hr
+        date_hrs_dic[rec_date] = rec_hr
+        
 
 ###Calculate AVGs , Imputation, Healthy baseline Median, and Alerts
 date_hr_avgs_dic = {}
 for key in date_hrs_dic:
     AVGHR = 0
     temp = date_hrs_dic[key]
-    numOfHRs = str(temp).count("*") + 1
-    hrs = temp.split("*")
-    for hr in hrs:
-        AVGHR = AVGHR + int(float(hr))
-    AVGHR = int(AVGHR/numOfHRs)
-    date_hr_avgs_dic[key] = AVGHR
+    # numOfHRs = str(temp).count("*") + 1
+    # hrs = temp.split("*")
+    # for hr in hrs:
+    #     AVGHR = AVGHR + int(float(hr))
+    #     print("AVGHR: ", AVGHR)
+    # AVGHR = int(AVGHR/numOfHRs)
+    date_hr_avgs_dic[key] = temp # is already AVGHR, as we have the average RHR 
 
 missed_days_avg_dic = {}
 sorted_keys = sorted(date_hr_avgs_dic.keys())
 sorted_avgs = sorted(date_hr_avgs_dic.items())
 for i,v in enumerate(sorted_keys):
+    print(i)
     if(i!=0 and i!=len(sorted_keys)-1):
-        today = datetime.datetime.strptime(sorted_keys[i] , "%Y-%m-%d")
-        nextDay = datetime.datetime.strptime(sorted_keys[i+1] , "%Y-%m-%d")
-        prevDay = datetime.datetime.strptime(sorted_keys[i-1] , "%Y-%m-%d")
-        if ( (nextDay-today).days==1 and (today-prevDay).days==2):
-            missDate = today - datetime.timedelta(days=1)
-            missed_days_avg_dic[missDate.strftime("%Y-%m-%d")] = round((date_hr_avgs_dic[sorted_keys[i]] + date_hr_avgs_dic[sorted_keys[i-1]])/2 , 1)
+        print(sorted_keys[i])
+        today = sorted_keys[i] # datetime.datetime(sorted_keys[i]) # datetime.datetime.strptime(sorted_keys[i] , "%Y-%m-%d")
+        nextDay = sorted_keys[i+1] # datetime.datetime(sorted_keys[i+1]) # datetime.datetime.strptime(sorted_keys[i+1] , "%Y-%m-%d")
+        prevDay = sorted_keys[i-1] # datetime.datetime(sorted_keys[i-1]) # datetime.datetime.strptime(sorted_keys[i-1] , "%Y-%m-%d")
+        # if ( (nextDay-today).days==1 and (today-prevDay).days==2):
+        #     missDate = today - datetime.timedelta(days=1)
+        #     missed_days_avg_dic[missDate.strftime("%Y-%m-%d")] = round((date_hr_avgs_dic[sorted_keys[i]] + date_hr_avgs_dic[sorted_keys[i-1]])/2 , 1)
 for key in missed_days_avg_dic:
     if key not in date_hr_avgs_dic:
         date_hr_avgs_dic[key] = missed_days_avg_dic[key]
@@ -238,10 +267,11 @@ elif(medianConfig == "AbsoluteMedian"):
         MEDHR = int(statistics.median(med_list))
         date_hr_meds_dic[key] = MEDHR
 
-        
+print("date_hr_avgs_dic: ")
 for key in date_hr_avgs_dic:
     if (key in date_hr_meds_dic):
-        if (date_hr_avgs_dic[key] >= date_hr_meds_dic[key] + red_threshold): 
+        print(key)
+        if (date_hr_avgs_dic[key] >= date_hr_meds_dic[key] + red_threshold):
             with open("potenital_reds.csv" , "a") as out_file:
                 out_file.write(key + "\n")
         if (date_hr_avgs_dic[key] >= date_hr_meds_dic[key] + yellow_threshold):
